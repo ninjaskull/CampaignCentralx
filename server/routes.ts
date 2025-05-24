@@ -57,14 +57,20 @@ function encrypt(text: string): string {
 }
 
 function decrypt(encryptedData: string): string {
-  const [ivHex, encrypted] = encryptedData.split(':');
-  const iv = Buffer.from(ivHex, 'hex');
-  const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
-  
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  
-  return decrypted;
+  try {
+    const [ivHex, encrypted] = encryptedData.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
+    
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+  } catch (error) {
+    // If decryption fails, return the raw data
+    console.warn('Decryption failed, returning raw data:', error);
+    return encryptedData;
+  }
 }
 
 // CSV parsing utilities
@@ -172,17 +178,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/campaigns/:id/contacts', requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
       const search = req.query.search as string;
-      
-      const offset = (page - 1) * limit;
       
       let contacts;
       if (search) {
         contacts = await storage.searchContactsInCampaign(id, search);
       } else {
-        contacts = await storage.getContactsByCampaignId(id, limit, offset);
+        // Get ALL contacts without pagination
+        contacts = await storage.getContactsByCampaignId(id, 10000, 0);
       }
       
       // Decrypt contact data
@@ -192,20 +195,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const contactData = JSON.parse(decryptedData);
           return { ...contact, ...contactData };
         } catch (error) {
-          console.error('Error decrypting contact data:', error);
-          return contact;
+          console.warn('Error decrypting contact data, using stored fields:', error);
+          // Return contact with available fields if decryption fails
+          return {
+            ...contact,
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            email: contact.email,
+            company: contact.company,
+            title: contact.title,
+            mobilePhone: contact.mobilePhone,
+            otherPhone: contact.otherPhone,
+            corporatePhone: contact.corporatePhone,
+            personLinkedinUrl: contact.personLinkedinUrl,
+            companyLinkedinUrl: contact.companyLinkedinUrl,
+            website: contact.website
+          };
         }
       });
       
-      const totalCount = await storage.getContactsCountByCampaignId(id);
+      const totalCount = decryptedContacts.length;
       
       res.json({
         contacts: decryptedContacts,
         pagination: {
-          page,
-          limit,
+          page: 1,
+          limit: totalCount,
           total: totalCount,
-          totalPages: Math.ceil(totalCount / limit)
+          totalPages: 1
         }
       });
     } catch (error) {
