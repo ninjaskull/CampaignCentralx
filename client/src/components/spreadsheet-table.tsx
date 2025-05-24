@@ -11,8 +11,11 @@ import {
 import {
   ArrowUpDown,
   ExternalLink,
-  Users
+  Users,
+  Copy,
+  Download
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { Contact } from "@shared/schema";
 
 interface PaginationData {
@@ -42,6 +45,8 @@ export default function SpreadsheetTable({
     key: string;
     direction: 'asc' | 'desc';
   } | null>(null);
+  
+  const { toast } = useToast();
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -66,6 +71,107 @@ export default function SpreadsheetTable({
       key,
       direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      // Create header row
+      const headers = [
+        'First Name', 'Last Name', 'Title', 'Company', 'Email', 
+        'Mobile Phone', 'Other Phone', 'Corporate Phone', 
+        'Person LinkedIn', 'Company LinkedIn', 'Website'
+      ];
+      
+      // Create data rows
+      const rows = contacts.map(contact => [
+        contact.firstName || '',
+        contact.lastName || '',
+        contact.title || '',
+        contact.company || '',
+        contact.email || '',
+        contact.mobilePhone || '',
+        contact.otherPhone || '',
+        contact.corporatePhone || '',
+        contact.personLinkedinUrl || '',
+        contact.companyLinkedinUrl || '',
+        contact.website || ''
+      ]);
+      
+      // Combine header and data
+      const allRows = [headers, ...rows];
+      
+      // Convert to tab-separated values (TSV) for Excel compatibility
+      const tsvContent = allRows.map(row => row.join('\t')).join('\n');
+      
+      await navigator.clipboard.writeText(tsvContent);
+      
+      toast({
+        title: "Copied to Clipboard!",
+        description: `${contacts.length} contacts copied. You can now paste directly into Excel.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Unable to copy data to clipboard. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const exportToCSV = () => {
+    try {
+      // Create header row
+      const headers = [
+        'First Name', 'Last Name', 'Title', 'Company', 'Email', 
+        'Mobile Phone', 'Other Phone', 'Corporate Phone', 
+        'Person LinkedIn', 'Company LinkedIn', 'Website'
+      ];
+      
+      // Create data rows
+      const rows = contacts.map(contact => [
+        contact.firstName || '',
+        contact.lastName || '',
+        contact.title || '',
+        contact.company || '',
+        contact.email || '',
+        contact.mobilePhone || '',
+        contact.otherPhone || '',
+        contact.corporatePhone || '',
+        contact.personLinkedinUrl || '',
+        contact.companyLinkedinUrl || '',
+        contact.website || ''
+      ]);
+      
+      // Combine header and data
+      const allRows = [headers, ...rows];
+      
+      // Convert to CSV format
+      const csvContent = allRows.map(row => 
+        row.map(field => `"${field.replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `campaign_contacts_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful!",
+        description: `${contacts.length} contacts exported to CSV file.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Unable to export data. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const renderPaginationButtons = () => {
@@ -147,7 +253,36 @@ export default function SpreadsheetTable({
 
   return (
     <div className="overflow-hidden bg-white">
-      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
+      {/* Export Controls */}
+      <div className="p-4 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-slate-600">
+            {contacts.length.toLocaleString()} contacts loaded
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyToClipboard}
+              className="flex items-center space-x-2"
+            >
+              <Copy className="h-4 w-4" />
+              <span>Copy All to Excel</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToCSV}
+              className="flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export CSV</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-280px)]">
         <table className="w-full border-collapse">
           <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-40">
             <tr>

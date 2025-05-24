@@ -188,30 +188,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contacts = await storage.getContactsByCampaignId(id, 10000, 0);
       }
       
-      // Decrypt contact data
+      // Return contact data directly without encryption for now
       const decryptedContacts = contacts.map(contact => {
-        try {
-          const decryptedData = decrypt(contact.encryptedData);
-          const contactData = JSON.parse(decryptedData);
-          return { ...contact, ...contactData };
-        } catch (error) {
-          console.warn('Error decrypting contact data, using stored fields:', error);
-          // Return contact with available fields if decryption fails
-          return {
-            ...contact,
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            email: contact.email,
-            company: contact.company,
-            title: contact.title,
-            mobilePhone: contact.mobilePhone,
-            otherPhone: contact.otherPhone,
-            corporatePhone: contact.corporatePhone,
-            personLinkedinUrl: contact.personLinkedinUrl,
-            companyLinkedinUrl: contact.companyLinkedinUrl,
-            website: contact.website
-          };
-        }
+        return {
+          id: contact.id,
+          campaignId: contact.campaignId,
+          firstName: contact.firstName || '',
+          lastName: contact.lastName || '',
+          email: contact.email || '',
+          company: contact.company || '',
+          title: contact.title || '',
+          mobilePhone: contact.mobilePhone || '',
+          otherPhone: contact.otherPhone || '',
+          corporatePhone: contact.corporatePhone || '',
+          personLinkedinUrl: contact.personLinkedinUrl || '',
+          companyLinkedinUrl: contact.companyLinkedinUrl || '',
+          website: contact.website || ''
+        };
       });
       
       const totalCount = decryptedContacts.length;
