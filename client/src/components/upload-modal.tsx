@@ -336,7 +336,7 @@ export default function UploadModal({ open, onOpenChange, onSuccess }: UploadMod
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Select column...</SelectItem>
+                            <SelectItem value="none">Select column...</SelectItem>
                             {fileInfo.headers.map(header => (
                               <SelectItem key={header} value={header}>{header}</SelectItem>
                             ))}
