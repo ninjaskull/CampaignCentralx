@@ -188,7 +188,7 @@ export default function UploadModal({ open, onOpenChange, onSuccess }: UploadMod
   const updateFieldMapping = (field: keyof FieldMapping, value: string) => {
     setFieldMapping(prev => ({
       ...prev,
-      [field]: value === 'skip' ? undefined : value
+      [field]: value === 'skip' || value === 'none' ? undefined : value
     }));
   };
 
@@ -371,7 +371,7 @@ export default function UploadModal({ open, onOpenChange, onSuccess }: UploadMod
                               <SelectValue placeholder="Select CSV column..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Select column...</SelectItem>
+                              <SelectItem value="none">Select column...</SelectItem>
                               {fileInfo.headers.map(header => (
                                 <SelectItem key={header} value={header}>{header}</SelectItem>
                               ))}
