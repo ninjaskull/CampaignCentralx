@@ -29,8 +29,8 @@ export default function CampaignView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    company: "",
-    title: "",
+    company: "all",
+    title: "all",
   });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -104,7 +104,7 @@ export default function CampaignView() {
   };
 
   const clearFilters = () => {
-    setFilters({ company: "", title: "" });
+    setFilters({ company: "all", title: "all" });
     setSearchQuery("");
   };
 
@@ -205,7 +205,7 @@ export default function CampaignView() {
                   <SelectValue placeholder="All Companies" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Companies</SelectItem>
+                  <SelectItem value="all">All Companies</SelectItem>
                   {/* Companies would be populated from actual data */}
                 </SelectContent>
               </Select>
@@ -218,7 +218,7 @@ export default function CampaignView() {
                   <SelectValue placeholder="All Titles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Titles</SelectItem>
+                  <SelectItem value="all">All Titles</SelectItem>
                   {/* Titles would be populated from actual data */}
                 </SelectContent>
               </Select>
