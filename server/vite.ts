@@ -40,7 +40,14 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('dist/public'));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../dist/public/index.html'));
+  });
+} else {
   app.use(vite.middlewares);
+};
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
