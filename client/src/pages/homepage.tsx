@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Globe,
   Smartphone,
@@ -27,6 +28,7 @@ import { setAuthToken } from "@/lib/auth";
 export default function Homepage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
@@ -57,6 +59,8 @@ export default function Homepage() {
         const data = await response.json();
         setAuthToken(data.token);
         setLocation('/dashboard');
+        setShowAdminModal(false);
+        setPassword("");
         toast({
           title: "Access Granted",
           description: "Welcome to Campaign Manager",
@@ -77,6 +81,10 @@ export default function Homepage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCopyrightClick = () => {
+    setShowAdminModal(true);
   };
 
   return (
@@ -318,46 +326,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* Admin Access Section */}
-      <section className="py-20 bg-slate-100">
-        <div className="max-w-md mx-auto px-4">
-          <Card className="bg-white border-slate-200 shadow-xl">
-            <CardHeader className="text-center space-y-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl flex items-center justify-center mx-auto">
-                <Lock className="text-white h-6 w-6" />
-              </div>
-              <CardTitle className="text-xl font-bold text-slate-900">
-                Admin Access
-              </CardTitle>
-              <p className="text-slate-600 text-sm">
-                Campaign management dashboard
-              </p>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Enter admin password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 bg-white border-slate-300"
-                    required
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 bg-slate-800 hover:bg-slate-900 text-white font-medium"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Authenticating..." : "Access Dashboard"}
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+
 
       {/* Footer */}
       <footer className="bg-slate-900 text-white py-16">
@@ -406,10 +375,69 @@ export default function Homepage() {
           </div>
           
           <div className="border-t border-slate-800 mt-12 pt-8 text-center text-slate-400">
-            <p>&copy; 2024 Fallowl. All rights reserved. Built with passion and precision.</p>
+            <p>
+              <span 
+                onClick={handleCopyrightClick}
+                className="cursor-pointer hover:text-white transition-colors"
+              >
+                &copy; 2024
+              </span> Fallowl. All rights reserved. Built with passion and precision.
+            </p>
           </div>
         </div>
       </footer>
+
+      {/* Hidden Admin Access Modal */}
+      <Dialog open={showAdminModal} onOpenChange={setShowAdminModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-12 h-12 bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Lock className="text-white h-6 w-6" />
+            </div>
+            <DialogTitle className="text-center text-xl font-bold text-slate-900">
+              Admin Access
+            </DialogTitle>
+            <p className="text-center text-slate-600 text-sm">
+              Enter password to access campaign management dashboard
+            </p>
+          </DialogHeader>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4">
+            <div>
+              <Input
+                type="password"
+                placeholder="Enter admin password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 bg-white border-slate-300"
+                required
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowAdminModal(false);
+                  setPassword("");
+                }}
+                className="flex-1 h-12"
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                className="flex-1 h-12 bg-slate-800 hover:bg-slate-900 text-white font-medium"
+                disabled={isLoading}
+              >
+                {isLoading ? "Authenticating..." : "Access Dashboard"}
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
