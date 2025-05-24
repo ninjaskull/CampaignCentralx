@@ -428,52 +428,7 @@ export default function SpreadsheetTable({
         </table>
       </div>
 
-      {/* Pagination Footer */}
-      {pagination && (
-        <div className="bg-white border-t border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-sm text-slate-600">
-              <span>Showing</span>
-              <Select 
-                value={pagination.limit.toString()} 
-                onValueChange={onPageSizeChange}
-              >
-                <SelectTrigger className="h-8 w-16">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-              <span>of {pagination.total.toLocaleString()} results</span>
-            </div>
 
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-              >
-                Previous
-              </Button>
-              <div className="flex space-x-1">
-                {renderPaginationButtons()}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -70,12 +70,10 @@ export default function CampaignView() {
 
   // Fetch campaign contacts
   const { data: contactsData, isLoading: contactsLoading } = useQuery({
-    queryKey: ['/api/campaigns', id, 'contacts', { page, pageSize, search: searchQuery }],
+    queryKey: ['/api/campaigns', id, 'contacts', { search: searchQuery }],
     queryFn: async () => {
       const token = getAuthToken();
       const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pageSize.toString(),
         ...(searchQuery && { search: searchQuery }),
       });
       
@@ -103,22 +101,11 @@ export default function CampaignView() {
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    setPage(1); // Reset to first page when searching
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handlePageSizeChange = (newPageSize: string) => {
-    setPageSize(parseInt(newPageSize));
-    setPage(1); // Reset to first page when changing page size
   };
 
   const clearFilters = () => {
     setFilters({ company: "", title: "" });
     setSearchQuery("");
-    setPage(1);
   };
 
   const formatDate = (date: string) => {
@@ -248,9 +235,9 @@ export default function CampaignView() {
       <SpreadsheetTable
         contacts={contactsData?.contacts || []}
         loading={contactsLoading}
-        pagination={contactsData?.pagination}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        pagination={undefined}
+        onPageChange={() => {}}
+        onPageSizeChange={() => {}}
       />
     </div>
   );

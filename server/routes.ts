@@ -188,29 +188,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contacts = await storage.getContactsByCampaignId(id, 10000, 0);
       }
       
-      // Return contact data directly without encryption for now
-      const decryptedContacts = contacts.map(contact => {
-        return {
-          id: contact.id,
-          campaignId: contact.campaignId,
-          firstName: contact.firstName || '',
-          lastName: contact.lastName || '',
-          email: contact.email || '',
-          company: contact.company || '',
-          title: contact.title || '',
-          mobilePhone: contact.mobilePhone || '',
-          otherPhone: contact.otherPhone || '',
-          corporatePhone: contact.corporatePhone || '',
-          personLinkedinUrl: contact.personLinkedinUrl || '',
-          companyLinkedinUrl: contact.companyLinkedinUrl || '',
-          website: contact.website || ''
-        };
-      });
+      // Return contact data directly - no encryption/decryption needed
+      const processedContacts = contacts.map(contact => ({
+        id: contact.id,
+        campaignId: contact.campaignId,
+        firstName: contact.firstName || '',
+        lastName: contact.lastName || '',
+        email: contact.email || '',
+        company: contact.company || '',
+        title: contact.title || '',
+        mobilePhone: contact.mobilePhone || '',
+        otherPhone: contact.otherPhone || '',
+        corporatePhone: contact.corporatePhone || '',
+        personLinkedinUrl: contact.personLinkedinUrl || '',
+        companyLinkedinUrl: contact.companyLinkedinUrl || '',
+        website: contact.website || ''
+      }));
       
-      const totalCount = decryptedContacts.length;
+      const totalCount = processedContacts.length;
       
       res.json({
-        contacts: decryptedContacts,
+        contacts: processedContacts,
         pagination: {
           page: 1,
           limit: totalCount,
