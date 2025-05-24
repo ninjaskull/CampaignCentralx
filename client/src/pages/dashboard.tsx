@@ -142,7 +142,7 @@ export default function Dashboard() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const formatDate = (date: string) => {
+  const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -323,7 +323,7 @@ export default function Dashboard() {
                           <div className="flex items-center space-x-4 text-sm text-slate-600 mt-1">
                             <span>{campaign.recordCount.toLocaleString()} contacts</span>
                             <span>•</span>
-                            <span>Uploaded {formatDate(campaign.uploadDate)}</span>
+                            <span>Uploaded {formatDate(campaign.uploadDate.toString())}</span>
                             <span>•</span>
                             <span>{formatBytes(campaign.fileSize)}</span>
                           </div>
