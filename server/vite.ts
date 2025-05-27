@@ -1,11 +1,11 @@
 
+
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
-import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
 
@@ -22,9 +22,12 @@ export function log(message: string, source = "express") {
 
 export function serveStatic(app: Express) {
   // In production, serve static files from dist/public
-  const publicDir = path.resolve(process.cwd(), 'dist', 'public');
-  const indexPath = path.resolve(publicDir, 'index.html');
+  const publicDir = path.join(process.cwd(), 'dist', 'public');
+  const indexPath = path.join(publicDir, 'index.html');
   
+  log(`Serving static files from: ${publicDir}`, "express");
+  
+  // Serve static files
   app.use(express.static(publicDir));
   
   // Catch-all handler for SPA routing
@@ -64,21 +67,12 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        process.cwd(),
-        "client",
-        "index.html",
-      );
+      const clientTemplate = path.join(process.cwd(), "client", "index.html");
 
       let template = fs.readFileSync(clientTemplate, "utf-8");
       template = await vite.transformIndexHtml(url, template);
 
-      const { render } = await vite.ssrLoadModule("/src/main.tsx");
-      const rendered = await render(url);
-
-      const html = template.replace(`<!--app-html-->`, rendered ?? "");
-
-      res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      res.status(200).set({ "Content-Type": "text/html" }).end(template);
     } catch (e) {
       const err = e as Error;
       vite.ssrFixStacktrace(err);
