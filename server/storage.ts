@@ -1,6 +1,6 @@
 import { campaigns, contacts, type Campaign, type InsertCampaign, type Contact, type InsertContact, type FieldMapping } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, or, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // Campaign methods
@@ -71,12 +71,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchContactsInCampaign(campaignId: number, searchQuery: string): Promise<Contact[]> {
-    // Simple search implementation - in production, consider using full-text search
+    const { sql, or, and, ilike } = await import('drizzle-orm');
+    
+    const searchTerm = `%${searchQuery.toLowerCase()}%`;
+    
     return await db
       .select()
       .from(contacts)
-      .where(eq(contacts.campaignId, campaignId))
-      .limit(100); // Return first 100 results for search
+      .where(
+        and(
+          eq(contacts.campaignId, campaignId),
+          or(
+            ilike(contacts.firstName, searchTerm),
+            ilike(contacts.lastName, searchTerm),
+            ilike(contacts.email, searchTerm),
+            ilike(contacts.company, searchTerm),
+            ilike(contacts.title, searchTerm)
+          )
+        )
+      )
+      .limit(100);
   }
 }
 

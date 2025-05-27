@@ -43,24 +43,38 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 // Encryption utilities
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32);
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
 const ALGORITHM = 'aes-256-gcm';
 
 function encrypt(text: string): string {
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher(ALGORITHM, ENCRYPTION_KEY);
+  const key = typeof ENCRYPTION_KEY === 'string' ? Buffer.from(ENCRYPTION_KEY, 'hex') : ENCRYPTION_KEY;
+  const cipher = crypto.createCipherGCM(ALGORITHM, key, iv);
   
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   
-  return iv.toString('hex') + ':' + encrypted;
+  const authTag = cipher.getAuthTag();
+  
+  return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
 }
 
 function decrypt(encryptedData: string): string {
   try {
-    const [ivHex, encrypted] = encryptedData.split(':');
+    const parts = encryptedData.split(':');
+    if (parts.length !== 3) {
+      // Handle old format or plain text
+      console.warn('Invalid encrypted data format, returning raw data');
+      return encryptedData;
+    }
+    
+    const [ivHex, authTagHex, encrypted] = parts;
     const iv = Buffer.from(ivHex, 'hex');
-    const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const key = typeof ENCRYPTION_KEY === 'string' ? Buffer.from(ENCRYPTION_KEY, 'hex') : ENCRYPTION_KEY;
+    
+    const decipher = crypto.createDecipherGCM(ALGORITHM, key, iv);
+    decipher.setAuthTag(authTag);
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
