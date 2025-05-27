@@ -1,0 +1,54 @@
+## Guide to Fix: TypeError [ERR_INVALID_ARG_TYPE] in Production
+
+The error `TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined` typically occurs when `path.resolve()` or a similar function receives `undefined` for a path segment. In your case, this is happening in the production build (`dist/index.js`) likely because `import.meta.dirname` is not available or is `undefined` in the bundled ES Module (ESM) context.
+
+**File to Modify:** [`CampaignCentral/server/vite.ts`](CampaignCentral/server/vite.ts:0)
+
+**Reasoning:**
+Your server code in `server/vite.ts` uses `import.meta.dirname` to construct paths for serving static files. In an ESM bundle, `import.meta.url` is the standard way to get the current module's path, from which the directory name can be derived.
+
+**Steps to Fix:**
+
+1.  **Modify `CampaignCentral/server/vite.ts`:**
+    You need to change how `__dirname` (or an equivalent) is obtained. Instead of relying on `import.meta.dirname` directly, use `import.meta.url` along with Node.js's `url` and `path` modules.
+
+    Open [`CampaignCentral/server/vite.ts`](CampaignCentral/server/vite.ts:0) and make the following changes:
+
+    *   Add these imports at the top of the file:
+        ```typescript
+        import { fileURLToPath } from 'url';
+        // path is likely already imported, but ensure it is.
+        // import path from "path";
+        ```
+
+    *   Inside the `serveStatic` function, replace the line that defines `distPath`:
+        **Current code:**
+        ```typescript
+        // Around line 71
+        const distPath = path.resolve(import.meta.dirname, "public");
+        ```
+        **Replace with:**
+        ```typescript
+        // Around line 71
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const distPath = path.resolve(__dirname, "public");
+        ```
+        This correctly derives the current directory path in an ESM context.
+
+2.  **Rebuild Your Application:**
+    After saving the changes to [`CampaignCentral/server/vite.ts`](CampaignCentral/server/vite.ts:0), you need to rebuild your application so the `dist` directory is updated with the fix.
+    Run the build command in your terminal:
+    ```bash
+    npm run build
+    ```
+
+3.  **Commit and Re-deploy to Railway:**
+    *   Commit the changes to `CampaignCentral/server/vite.ts` (and any other files if you made further modifications).
+    *   Push the changes to your Git repository.
+    *   Railway should automatically pick up the new commit and start a new build and deployment.
+
+4.  **Verify:**
+    Once Railway has deployed the new version, check the logs to ensure the `TypeError` is resolved and your application starts correctly.
+
+This change ensures that path resolution works correctly in the production ESM environment created by your build process.
