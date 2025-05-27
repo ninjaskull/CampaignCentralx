@@ -7,12 +7,15 @@ import { readFileSync } from "fs";
 
 // Handle both development and production path resolution
 let __dirname: string;
-try {
-  const __filename = fileURLToPath(import.meta.url);
-  __dirname = dirname(__filename);
-} catch {
-  // Fallback for bundled environments
+if (process.env.NODE_ENV === 'production') {
   __dirname = process.cwd();
+} else {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    __dirname = dirname(__filename);
+  } catch {
+    __dirname = process.cwd();
+  }
 }
 
 const app = express();
