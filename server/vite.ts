@@ -1,5 +1,4 @@
 
-
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
@@ -25,9 +24,36 @@ export function serveStatic(app: Express) {
   const publicDir = path.join(process.cwd(), 'dist', 'public');
   const indexPath = path.join(publicDir, 'index.html');
   
-  log(`Serving static files from: ${publicDir}`, "express");
+  log(`Attempting to serve static files from: ${publicDir}`, "express");
   
-  // Serve static files
+  // Check if the public directory exists
+  if (!fs.existsSync(publicDir)) {
+    log(`Public directory not found: ${publicDir}`, "express");
+    
+    // Fallback: try to serve from current directory structure
+    const fallbackPublicDir = path.join(process.cwd(), 'public');
+    const fallbackIndexPath = path.join(process.cwd(), 'index.html');
+    
+    if (fs.existsSync(fallbackPublicDir)) {
+      log(`Using fallback public directory: ${fallbackPublicDir}`, "express");
+      app.use(express.static(fallbackPublicDir));
+    }
+    
+    // Catch-all handler
+    app.get('*', (req, res) => {
+      if (fs.existsSync(fallbackIndexPath)) {
+        res.sendFile(fallbackIndexPath);
+      } else if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Application not found - no index.html file found');
+      }
+    });
+    
+    return;
+  }
+  
+  // Serve static files from the public directory
   app.use(express.static(publicDir));
   
   // Catch-all handler for SPA routing
@@ -35,7 +61,7 @@ export function serveStatic(app: Express) {
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
-      res.status(404).send('Application not found');
+      res.status(404).send('Application not found - index.html missing');
     }
   });
 }
@@ -67,7 +93,12 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
+      // Use process.cwd() instead of import.meta.dirname
       const clientTemplate = path.join(process.cwd(), "client", "index.html");
+
+      if (!fs.existsSync(clientTemplate)) {
+        throw new Error(`Template file not found: ${clientTemplate}`);
+      }
 
       let template = fs.readFileSync(clientTemplate, "utf-8");
       template = await vite.transformIndexHtml(url, template);
