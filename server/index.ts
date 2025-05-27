@@ -2,6 +2,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { validateEnvironment } from "./env-validation";
 
 const app = express();
 app.use(express.json());
@@ -39,6 +40,11 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Validate environment variables
+    if (process.env.NODE_ENV === "production") {
+      validateEnvironment();
+    }
+    
     // Validate environment
     const nodeEnv = process.env.NODE_ENV || "development";
     log(`Starting server in ${nodeEnv} mode`, "server");
