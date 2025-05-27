@@ -1,6 +1,19 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { readFileSync } from "fs";
+
+// Handle both development and production path resolution
+let __dirname: string;
+try {
+  const __filename = fileURLToPath(import.meta.url);
+  __dirname = dirname(__filename);
+} catch {
+  // Fallback for bundled environments
+  __dirname = process.cwd();
+}
 
 const app = express();
 app.use(express.json());
