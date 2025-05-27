@@ -1,10 +1,10 @@
-
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
+import { fileURLToPath } from 'url';
 
 const viteLogger = createLogger();
 
@@ -20,49 +20,19 @@ export function log(message: string, source = "express") {
 }
 
 export function serveStatic(app: Express) {
-  // In production, serve static files from dist/public
-  const publicDir = path.join(process.cwd(), 'dist', 'public');
-  const indexPath = path.join(publicDir, 'index.html');
-  
-  log(`Attempting to serve static files from: ${publicDir}`, "express");
-  
-  // Check if the public directory exists
-  if (!fs.existsSync(publicDir)) {
-    log(`Public directory not found: ${publicDir}`, "express");
-    
-    // Fallback: try to serve from current directory structure
-    const fallbackPublicDir = path.join(process.cwd(), 'public');
-    const fallbackIndexPath = path.join(process.cwd(), 'index.html');
-    
-    if (fs.existsSync(fallbackPublicDir)) {
-      log(`Using fallback public directory: ${fallbackPublicDir}`, "express");
-      app.use(express.static(fallbackPublicDir));
-    }
-    
-    // Catch-all handler
-    app.get('*', (req, res) => {
-      if (fs.existsSync(fallbackIndexPath)) {
-        res.sendFile(fallbackIndexPath);
-      } else if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res.status(404).send('Application not found - no index.html file found');
-      }
-    });
-    
-    return;
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const distPath = path.resolve(__dirname, "public");
+
+  if (!fs.existsSync(distPath)) {
+    throw new Error(
+      `Could not find the build directory: ${distPath}. Ensure you've run the build command.`
+    );
   }
-  
-  // Serve static files from the public directory
-  app.use(express.static(publicDir));
-  
-  // Catch-all handler for SPA routing
-  app.get('*', (req, res) => {
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send('Application not found - index.html missing');
-    }
+
+  app.use(express.static(distPath));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
 
@@ -88,7 +58,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
-  
+
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
